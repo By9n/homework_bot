@@ -1,3 +1,4 @@
+"""Проект HOMEWORK Статус-БОТ."""
 import os
 import sys
 import logging
@@ -8,13 +9,12 @@ from dotenv import load_dotenv
 import requests
 import telegram
 
-from exceptions import (EmptyResponseFromAPI, NotForSend, TelegramError,
-                        WrongResponseCode)
+from exceptions import EmptyResponseFromAPI, NotForSend, WrongResponseCode
 
 load_dotenv()
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-TELEGRAM_TOKEN = '71321:AAFI5DizOvZNxTLiQH_5fYLGnO2uvxJ3uQM'# os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 RETRY_PERIOD = 600  # Секунды.
@@ -34,15 +34,14 @@ def check_tokens() -> bool:
     logging.info('Проверка наличия всех токенов')
     return all([TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID])
 
-    
+
 def send_message(bot: telegram.bot.Bot, message: str) -> None:
     """Отправляет сообщение в telegram."""
     try:
         logging.info('Начало отправки статуса в telegram')
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-    except telegram.error.Unauthorized as error:
-        logging.info('Начало555555555555555туса в telegram')
-        raise TelegramError(f'Ошибка отправки статуса в telegram: {error}')
+    except telegram.TelegramError as error:
+        logging.error(f'Ошибка отправки статуса в telegram: {error}')
     else:
         logging.debug('Статус отправлен в telegram')
 
@@ -62,25 +61,20 @@ def get_api_answer(current_timestamp: int) -> dict:
         response = requests.get(**params_request)
         if response.status_code != HTTPStatus.OK:
             raise WrongResponseCode(
-                f'Ответ API не возвращает 200. '
+                f'Ответ от API не 200. '
                 f'Код ответа: {response.status_code}. '
                 f'Причина: {response.reason}. '
                 f'Текст: {response.text}.'
             )
         return response.json()
     except Exception as error:
-        message = ('API не возвращает 200. Запрос: {url}, {headers}, {params}.'
+        message = ('Ответ от API не 200. Запрос: {url}, {headers}, {params}.'
                    ).format(**params_request)
         raise WrongResponseCode(message, error)
 
 
-
 def check_response(response: dict) -> list:
-    """Проверяет ответ API на корректность.
-    Если ответ API соответствует ожиданиям,
-    то функция должна вернуть список домашних работ (он может быть и пустым),
-    доступный в ответе API по ключу 'homeworks'
-    """
+    """Проверяет ответ API на корректность."""
     logging.info('Проверка ответа API на корректность')
     if not isinstance(response, dict):
         raise TypeError('Ответ API не является dict')
@@ -93,26 +87,24 @@ def check_response(response: dict) -> list:
 
 
 def parse_status(homework: dict) -> str:
-    """Извлекает из информации о конкретной домашней работе статус этой работы.
-    В случае успеха, функция возвращает подготовленную для отправки
-    в Telegram строку.
-    """
-    logging.info('Проводим проверки и извлекаем статус работы')
+    """Извлекает и проверяет статус работы."""
+    logging.info('Проверяем и извлекаем статус работы')
     if 'homework_name' not in homework:
-        raise KeyError('Нет ключа homework_name в ответе API')
+        raise KeyError('Нет ключа homework_name в ответе от API')
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
     if homework_status not in HOMEWORK_VERDICTS:
-        raise ValueError(f'Неизвестный статус работы - {homework_status}')
+        raise ValueError(f'Неизвестный статус - {homework_status}')
     return ('Изменился статус проверки работы "{homework_name}". {verdict}'
             ).format(homework_name=homework_name,
                      verdict=HOMEWORK_VERDICTS[homework_status]
                      )
 
+
 def main():
-    """Основная логика работы бота."""
+    """Основной цикл работы бота."""
     if not check_tokens():
-        message = 'Отсутствует токен. Бот остановлен!'
+        message = 'Отсутствует токен или id. Бот остановлен!'
         logging.critical(message)
         sys.exit(message)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
@@ -135,7 +127,7 @@ def main():
                 message = 'Нет новых статусов'
             if message != prev_message:
                 send_message(bot, message)
-                prev_msg = message
+                prev_message = message
             else:
                 logging.info(message)
 
@@ -156,12 +148,12 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(
-    level=logging.INFO,
-    format=(
-        '%(asctime)s, %(levelname)s, Путь - %(pathname)s, '
-        'Файл - %(filename)s, Функция - %(funcName)s, '
-        'Номер строки - %(lineno)d, %(message)s'
-    ),
-    handlers=[logging.FileHandler('log.txt', encoding='UTF-8'),
-                logging.StreamHandler(sys.stdout)])
+        level=logging.INFO,
+        format=(
+            '%(asctime)s, %(levelname)s, Путь - %(pathname)s, '
+            'Файл - %(filename)s, Функция - %(funcName)s, '
+            'Номер строки - %(lineno)d, %(message)s'
+        ),
+        handlers=[logging.FileHandler('log.txt', encoding='UTF-8'),
+                  logging.StreamHandler(sys.stdout)])
     main()

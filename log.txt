@@ -100,3 +100,16 @@
 2024-04-22 19:19:17,076, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - check_tokens, Номер строки - 34, Проверка наличия всех токенов
 2024-04-22 19:19:17,077, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 41, Начало отправки статуса в telegram
 2024-04-22 19:19:18,281, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 44, Начало555555555555555туса в telegram
+2024-04-22 19:22:15,117, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - check_tokens, Номер строки - 34, Проверка наличия всех токенов
+2024-04-22 19:22:15,119, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 41, Начало отправки статуса в telegram
+2024-04-22 19:22:16,258, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 44, Начало555555555555555туса в telegram
+2024-04-22 19:27:11,159, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - check_tokens, Номер строки - 34, Проверка наличия всех токенов
+2024-04-22 19:27:11,160, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 41, Начало отправки статуса в telegram
+2024-04-22 19:27:12,252, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 44, Начало555555555555555туса в telegram
+2024-04-22 19:27:12,252, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - main, Номер строки - 122, Бот начал работу
+2024-04-22 19:27:12,253, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - get_api_answer, Номер строки - 60, Начало запроса к API. Запрос: https://practicum.yandex.ru/api/user_api/homework_statuses/, {'Authorization': 'OAuth y0_AgAAAABdrXj4AAYckQAAAAECgBI3AADyjyllq0pLJZw-gqQJ8w0QfHx-JA'}, {'from_date': 1713803231}.
+2024-04-22 19:27:13,289, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - check_response, Номер строки - 84, Проверка ответа API на корректность
+2024-04-22 19:27:13,289, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 41, Начало отправки статуса в telegram
+2024-04-22 19:27:13,332, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 44, Начало555555555555555туса в telegram
+2024-04-22 19:48:23,518, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - check_tokens, Номер строки - 34, Проверка наличия всех токенов
+2024-04-22 19:48:23,520, INFO, Путь - c:\Dev\sprint_12\final\homework_bot\homework.py, Файл - homework.py, Функция - send_message, Номер строки - 41, Начало отправки статуса в telegram
