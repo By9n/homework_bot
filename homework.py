@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 import requests
 import telegram
 
-from exceptions import EmptyResponseFromAPI, NotForSend, WrongResponseCode, WrongJSONDecode
+from exceptions import (
+    EmptyResponseFromAPI, NotForSend, WrongResponseCode, WrongJSONDecode
+)
 
 load_dotenv()
 
