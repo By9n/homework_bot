@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import requests
 import telegram
 
-from exceptions import EmptyResponseFromAPI, NotForSend, WrongResponseCode
+from exceptions import EmptyResponseFromAPI, NotForSend, WrongResponseCode, WrongJSONDecode
 
 load_dotenv()
 
@@ -29,16 +29,23 @@ HOMEWORK_VERDICTS = {
 }
 
 
-def check_tokens() -> bool:
+def check_tokens() -> list[bool, str]:
     """Проверка, что все токены доступны из окружения."""
-    logging.info('Проверка наличия всех токенов')
-    return all([TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID])
+    TOKENS = {
+        'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
+        'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
+        'TELEGRAM_CHAT_ID': TELEGRAM_CHAT_ID
+    }
+    status = [True, 'TOKENS - FOUND']
+    for key, value in TOKENS.items():
+        if not value:
+            return [False, key]
+    return status
 
 
 def send_message(bot: telegram.bot.Bot, message: str) -> None:
     """Отправляет сообщение в telegram."""
     try:
-        logging.info('Начало отправки статуса в telegram')
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
     except telegram.TelegramError as error:
         logging.error(f'Ошибка отправки статуса в telegram: {error}')
@@ -48,29 +55,29 @@ def send_message(bot: telegram.bot.Bot, message: str) -> None:
 
 def get_api_answer(current_timestamp: int) -> dict:
     """Отправляем запрос к API и получаем список домашних работ."""
-    timestamp = current_timestamp or int(time.time())
+    timestamp = current_timestamp
     params_request = {
         'url': ENDPOINT,
         'headers': HEADERS,
         'params': {'from_date': timestamp},
     }
-    message = ('Начало запроса к API. Запрос: {url}, {headers}, {params}.'
-               ).format(**params_request)
-    logging.info(message)
     try:
         response = requests.get(**params_request)
         if response.status_code != HTTPStatus.OK:
-            raise WrongResponseCode(
+            raise requests.HTTPError(
                 f'Ответ от API не 200. '
                 f'Код ответа: {response.status_code}. '
                 f'Причина: {response.reason}. '
                 f'Текст: {response.text}.'
             )
         return response.json()
-    except Exception as error:
+    except requests.HTTPError as error:
         message = ('Ответ от API не 200. Запрос: {url}, {headers}, {params}.'
                    ).format(**params_request)
         raise WrongResponseCode(message, error)
+    except requests.JSONDecodeError as error:
+        message = f"Ошибка декодирования JSON: {error}"
+        raise WrongJSONDecode(message, error)
 
 
 def check_response(response: dict) -> list:
@@ -81,8 +88,11 @@ def check_response(response: dict) -> list:
     if 'homeworks' not in response or 'current_date' not in response:
         raise EmptyResponseFromAPI('Нет ключа homeworks в ответе API')
     homeworks = response.get('homeworks')
+    current_date = response.get('current_date')
     if not isinstance(homeworks, list):
         raise TypeError('homeworks не является list')
+    if not isinstance(current_date, int):
+        raise TypeError('current_date не является int')
     return homeworks
 
 
@@ -103,24 +113,25 @@ def parse_status(homework: dict) -> str:
 
 def main():
     """Основной цикл работы бота."""
-    if not check_tokens():
-        message = 'Отсутствует токен или id. Бот остановлен!'
+    check_list = check_tokens()
+    if not check_list[0]:
+        message = (
+            f'Отсутствует токен: {check_list[1]}. '
+            f'Бот остановлен!'
+        )
         logging.critical(message)
-        sys.exit(message)
+        sys.exit(-1)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    start_message = 'Бот начал работу'
-    send_message(bot, start_message)
-    logging.info(start_message)
     prev_message = ''
 
     while True:
         try:
             response = get_api_answer(current_timestamp)
+            homeworks = check_response(response)
             current_timestamp = response.get(
                 'current_date', int(time.time())
             )
-            homeworks = check_response(response)
             if homeworks:
                 message = parse_status(homeworks[0])
             else:
@@ -147,6 +158,7 @@ def main():
 
 
 if __name__ == '__main__':
+    current_working_directory = os.getcwd()
     logging.basicConfig(
         level=logging.INFO,
         format=(
@@ -154,6 +166,8 @@ if __name__ == '__main__':
             'Файл - %(filename)s, Функция - %(funcName)s, '
             'Номер строки - %(lineno)d, %(message)s'
         ),
-        handlers=[logging.FileHandler('log.txt', encoding='UTF-8'),
+        handlers=[logging.FileHandler(f'{current_working_directory}log.log',
+                                      encoding='UTF-8'
+                                      ),
                   logging.StreamHandler(sys.stdout)])
     main()
