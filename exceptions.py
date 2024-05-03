@@ -29,3 +29,15 @@ class MissingEnvVar(Exception):
     """Не найден токен в окружении."""
 
     pass
+
+
+class EndPointIsNotAvailiable(Exception):
+    """Обработка исключения при недоступности ENDPOINT API."""
+
+    pass
+
+
+class RequestError(Exception):
+    """Обработка исключения при ошибке ответа от АПИ."""
+
+    pass
