@@ -10,8 +10,7 @@ import requests
 import telegram
 
 from exceptions import (
-    EmptyResponseFromAPI, NotForSend, WrongResponseCode, WrongJSONDecode,
-    EndPointIsNotAvailiable, RequestError
+    NotForSend, WrongJSONDecode, EndPointIsNotAvailiable, RequestError
 )
 
 load_dotenv()
@@ -19,7 +18,7 @@ load_dotenv()
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-TOKENS_LIST = ['PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID']
+TOKENS_REQRIED = ('PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID')
 
 RETRY_PERIOD = 600  # Секунды.
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
@@ -35,8 +34,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens() -> None:
     """Проверяем доступность переменных окружения."""
-    tokens_misslist = []
-    tokens_misslist = [token for token in TOKENS_LIST
+    tokens_misslist = [token for token in TOKENS_REQRIED
                        if not globals().get(token)]
     if tokens_misslist:
         tokens_str = ', '.join(tokens_misslist)
@@ -74,12 +72,6 @@ def get_api_answer(current_timestamp: int) -> dict:
                 f'Текст: {response.text}.'
             )
         return response.json()
-
-    except EndPointIsNotAvailiable as error:
-        message = (
-            'Ответ от API не 200. Запрос: {url}, {headers}, {params}.'
-        ).format(**params_request)
-        raise WrongResponseCode(message, error)
     except requests.JSONDecodeError as error:
         message = f"Ошибка декодирования JSON: {error}"
         raise WrongJSONDecode(message, error)
@@ -90,11 +82,10 @@ def get_api_answer(current_timestamp: int) -> dict:
 
 def check_response(response: dict) -> list:
     """Проверяет ответ API на корректность."""
-    logging.info('Проверка ответа API на корректность')
     if not isinstance(response, dict):
         raise TypeError('Ответ API не является dict')
     if 'homeworks' not in response or 'current_date' not in response:
-        raise EmptyResponseFromAPI('Нет ключа homeworks в ответе API')
+        raise KeyError('Нет ключа homeworks в ответе API')
     homeworks = response.get('homeworks')
     current_date = response.get('current_date')
     if not isinstance(homeworks, list):
@@ -106,7 +97,6 @@ def check_response(response: dict) -> list:
 
 def parse_status(homework: dict) -> str:
     """Извлекает и проверяет статус работы."""
-    logging.info('Проверяем и извлекаем статус работы')
     if 'homework_name' not in homework:
         raise KeyError('Нет ключа homework_name в ответе от API')
     homework_name = homework.get('homework_name')
@@ -139,15 +129,14 @@ def main():
                 prev_message = message
             else:
                 logging.info(message)
-        except EmptyResponseFromAPI:
-            message = 'Нет ключа homeworks в ответе API'
-            send_message(bot, message)
+
         except NotForSend as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message, exc_info=True)
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
+            send_message(bot, message)
             logging.error(message, exc_info=True)
 
         finally:
