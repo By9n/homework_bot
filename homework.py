@@ -16,6 +16,8 @@ from exceptions import (
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
@@ -48,9 +50,9 @@ def send_message(bot: telegram.bot.Bot, message: str) -> None:
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
     except telegram.TelegramError as error:
-        logging.error(f'Ошибка отправки статуса в telegram: {error}')
+        logger.error(f'Ошибка отправки статуса в telegram: {error}')
     else:
-        logging.debug('Статус отправлен в telegram')
+        logger.debug('Статус отправлен в telegram')
 
 
 def get_api_answer(current_timestamp: int) -> dict:
@@ -114,7 +116,7 @@ def main():
     """Основной цикл работы бота."""
     tokens_errors = check_tokens()
     if tokens_errors:
-        logging.critical(
+        logger.critical(
             f'Отсутствует токен: {tokens_errors}. '
             f'Бот остановлен!'
         )
@@ -135,17 +137,17 @@ def main():
                 send_message(bot, message)
                 prev_message = message
             else:
-                logging.info(message)
+                logger.info(message)
             current_timestamp = response['current_date']
 
         except NotForSend as error:
             message = f'Сбой в работе программы: {error}'
-            logging.error(message, exc_info=True)
+            logger.error(message, exc_info=True)
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             send_message(bot, message)
-            logging.error(message, exc_info=True)
+            logger.error(message, exc_info=True)
 
         finally:
             time.sleep(RETRY_PERIOD)
