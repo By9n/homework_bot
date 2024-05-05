@@ -154,7 +154,7 @@ def main():
 if __name__ == '__main__':
     current_working_directory = os.getcwd()
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format=(
             '%(asctime)s, %(levelname)s, Путь - %(pathname)s, '
             'Файл - %(filename)s, Функция - %(funcName)s, '
