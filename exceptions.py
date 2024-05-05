@@ -23,3 +23,9 @@ class RequestError(Exception):
     """Обработка исключения при ошибке ответа от АПИ."""
 
     pass
+
+
+class CurrentDateError(NotForSend):
+    """Ошибка с ключом current_date в ответе API."""
+
+    pass

@@ -10,7 +10,8 @@ import requests
 import telegram
 
 from exceptions import (
-    NotForSend, WrongJSONDecode, EndPointIsNotAvailiable, RequestError
+    NotForSend, WrongJSONDecode, EndPointIsNotAvailiable,
+    RequestError, CurrentDateError
 )
 
 load_dotenv()
@@ -32,17 +33,14 @@ HOMEWORK_VERDICTS = {
 }
 
 
-def check_tokens() -> None:
+def check_tokens() -> str:
     """Проверяем доступность переменных окружения."""
+    tokens_str = ''
     tokens_misslist = [token for token in TOKENS_REQRIED
                        if not globals().get(token)]
     if tokens_misslist:
         tokens_str = ', '.join(tokens_misslist)
-        logging.critical(
-            f'Отсутствует токен: {tokens_str}. '
-            f'Бот остановлен!'
-        )
-        sys.exit(-1)
+    return tokens_str
 
 
 def send_message(bot: telegram.bot.Bot, message: str) -> None:
@@ -84,14 +82,17 @@ def check_response(response: dict) -> list:
     """Проверяет ответ API на корректность."""
     if not isinstance(response, dict):
         raise TypeError('Ответ API не является dict')
-    if 'homeworks' not in response or 'current_date' not in response:
+    if 'homeworks' not in response:
         raise KeyError('Нет ключа homeworks в ответе API')
     homeworks = response.get('homeworks')
-    current_date = response.get('current_date')
     if not isinstance(homeworks, list):
         raise TypeError('homeworks не является list')
+    if 'current_date' not in response:
+        message = 'Нет ключа "current_date" в ответе API'
+        raise CurrentDateError(message)
+    current_date = response.get('current_date')
     if not isinstance(current_date, int):
-        raise TypeError('current_date не является int')
+        raise CurrentDateError('current_date не является int')
     return homeworks
 
 
@@ -111,7 +112,13 @@ def parse_status(homework: dict) -> str:
 
 def main():
     """Основной цикл работы бота."""
-    check_tokens()
+    tokens_errors = check_tokens()
+    if tokens_errors:
+        logging.critical(
+            f'Отсутствует токен: {tokens_errors}. '
+            f'Бот остановлен!'
+        )
+        sys.exit(-1)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     prev_message = ''
@@ -129,6 +136,7 @@ def main():
                 prev_message = message
             else:
                 logging.info(message)
+            current_timestamp = response['current_date']
 
         except NotForSend as error:
             message = f'Сбой в работе программы: {error}'
